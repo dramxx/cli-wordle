@@ -4,6 +4,7 @@ mod ui;
 mod words;
 
 use app::App;
+use clap::Parser;
 use crossterm::{
     event::{self, Event, KeyCode, KeyEventKind},
     terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
@@ -12,8 +13,16 @@ use crossterm::{
 use ratatui::{backend::CrosstermBackend, Terminal};
 use std::io;
 
+#[derive(Parser)]
+#[command(author, version, about, long_about = None)]
+struct Args {
+    #[arg(default_value = "en")]
+    lang: String,
+}
+
 fn main() -> io::Result<()> {
-    let words = words::load_words();
+    let args = Args::parse();
+    let words = words::load_words(&args.lang);
 
     enable_raw_mode()?;
     let mut stdout = io::stdout();
