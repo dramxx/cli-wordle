@@ -256,7 +256,13 @@ fn render_keyboard(f: &mut Frame, area: Rect, app: &App) {
 
             f.render_widget(key, key_rect);
 
-            let letter = Span::raw(c.to_string()).style(Style::default().fg(Color::White));
+            let letter = Span::raw(c.to_string()).style(Style::default().fg(
+                if state == LetterState::Present {
+                    Color::Black
+                } else {
+                    Color::White
+                },
+            ));
             let p = Paragraph::new(letter).alignment(Alignment::Center);
             f.render_widget(p, key_rect);
         }
