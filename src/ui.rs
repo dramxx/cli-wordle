@@ -13,6 +13,9 @@ const TILE_SIZE: u16 = 5;
 const TILE_GAP: u16 = 1;
 const SHAKE_INTERVAL_MS: u128 = 50;
 const SHAKE_DURATION_MS: u128 = 300;
+const KEYBOARD_ROWS: usize = 3;
+const KEYBOARD_KEY_WIDTH: u16 = 3;
+const KEYBOARD_KEY_HEIGHT: u16 = 3;
 
 fn get_letter_color(state: LetterState) -> Color {
     match state {
@@ -109,24 +112,19 @@ pub fn render(f: &mut Frame, app: &App) {
 
     if !is_game_over {
         let grid_area = chunks[1];
-        let grid_width = 5 * TILE_SIZE + 4 * TILE_GAP;
-        let grid_height = 6 * TILE_SIZE + 5;
-        let grid_rect = Rect::new(
-            grid_area.x + (grid_area.width.saturating_sub(grid_width)) / 2,
-            grid_area.y + (grid_area.height.saturating_sub(grid_height)) / 2,
-            grid_width,
-            grid_height.min(grid_area.height),
-        );
-
         let current_row = app.game.guesses.len();
+        
+        let row_constraints: Vec<Constraint> = (0..6)
+            .map(|_| Constraint::Length(grid_area.height / 6))
+            .collect();
 
-        let row_constraints: Vec<Constraint> =
-            (0..6).map(|_| Constraint::Length(TILE_SIZE)).collect();
+        let grid_width = 5 * TILE_SIZE + 4 * TILE_GAP;
+        let grid_offset_x = (grid_area.width.saturating_sub(grid_width)) / 2;
 
         for (row_idx, row_rect) in Layout::default()
             .direction(Direction::Vertical)
-            .constraints(row_constraints)
-            .split(grid_rect)
+            .constraints(&row_constraints)
+            .split(grid_area)
             .iter()
             .enumerate()
         {
@@ -139,6 +137,12 @@ pub fn render(f: &mut Frame, app: &App) {
                 .split(*row_rect);
 
             for (col_idx, tile_rect) in col_rects.iter().enumerate() {
+                let centered_rect = Rect::new(
+                    grid_offset_x + tile_rect.x - row_rect.x,
+                    tile_rect.y,
+                    tile_rect.width,
+                    tile_rect.height,
+                );
                 let letter = if let Some(guess) = app.game.guesses.get(row_idx) {
                     guess.letters[col_idx]
                 } else if row_idx == current_row && col_idx < app.game.current.len() {
@@ -172,10 +176,10 @@ pub fn render(f: &mut Frame, app: &App) {
                 };
 
                 let shifted_rect = Rect::new(
-                    (tile_rect.x as i32 + shake_offset).max(0) as u16,
-                    tile_rect.y,
-                    tile_rect.width,
-                    tile_rect.height,
+                    (centered_rect.x as i32 + shake_offset).max(0) as u16,
+                    centered_rect.y,
+                    centered_rect.width,
+                    centered_rect.height,
                 );
 
                 render_tile(f, shifted_rect, letter, state, active, show_cursor);
@@ -212,22 +216,22 @@ pub fn render(f: &mut Frame, app: &App) {
 }
 
 fn render_keyboard(f: &mut Frame, area: Rect, app: &App) {
-    let rows = vec!["QWERTYUIOP", "ASDFGHJKL", "ZXCVBNM"];
+        let rows = ["QWERTYUIOP", "ASDFGHJKL", "ZXCVBNM"];
 
-    // Keyboard is 30 wide (10 keys * 3), align with grid which is 29 wide
-    // Center point is the same, so calculate from same reference
-    let keyboard_width = 10 * 3; // 30
+        // Keyboard is 30 wide (10 keys * 3), align with grid which is 29 wide
+        // Center point is the same, so calculate from same reference
+        let keyboard_width = 10 * KEYBOARD_KEY_WIDTH;
 
-    // Use same centering math as grid
-    let keyboard_area = Rect::new(
-        area.x + (area.width.saturating_sub(keyboard_width)) / 2,
-        area.y,
-        keyboard_width,
-        3 * 4,
-    );
+        // Use same centering math as grid
+        let keyboard_area = Rect::new(
+            area.x + (area.width.saturating_sub(keyboard_width)) / 2,
+            area.y,
+            keyboard_width,
+            KEYBOARD_ROWS as u16 * KEYBOARD_KEY_HEIGHT,
+        );
 
-    for (row_idx, row) in rows.iter().enumerate() {
-        let y = keyboard_area.y + row_idx as u16 * 4;
+        for (row_idx, row) in rows.iter().enumerate() {
+            let y = keyboard_area.y + row_idx as u16 * KEYBOARD_KEY_HEIGHT;
         let x_offset = if row_idx == 2 { 3 } else { 0 };
 
         for (col_idx, c) in row.chars().enumerate() {

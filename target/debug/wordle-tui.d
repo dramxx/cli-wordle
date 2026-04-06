@@ -1,1 +1,0 @@
-C:\DEV\cli-wordle\target\debug\wordle-tui.exe: C:\DEV\cli-wordle\en.txt C:\DEV\cli-wordle\sk.txt C:\DEV\cli-wordle\src\app.rs C:\DEV\cli-wordle\src\game.rs C:\DEV\cli-wordle\src\main.rs C:\DEV\cli-wordle\src\ui.rs C:\DEV\cli-wordle\src\words.rs
